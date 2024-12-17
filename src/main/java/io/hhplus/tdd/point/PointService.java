@@ -4,6 +4,8 @@ import io.hhplus.tdd.database.PointHistoryTable;
 import io.hhplus.tdd.database.UserPointTable;
 import io.hhplus.tdd.excpetion.UserNotFoundException;
 
+import java.util.List;
+
 public class PointService {
 
     private PointHistoryTable pointHistoryTable;
@@ -62,6 +64,17 @@ public class PointService {
         }
         pointHistoryTable.insert(id, amount, TransactionType.USE, updateMillis);
         return userPointTable.insertOrUpdate(id, origin.point()- amount);
+    }
+
+    /**
+     *  User의 포인트 충전/사용 내역을 조회한다.
+     */
+    List<PointHistory> getPointHistory(long id) throws RuntimeException {
+        List<PointHistory> histories = pointHistoryTable.selectAllByUserId(id);
+        if (histories.isEmpty()) {
+            throw new UserNotFoundException("사용자 정보가 없습니다.");
+        }
+        return histories;
     }
 
 }
