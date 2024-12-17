@@ -42,4 +42,26 @@ public class PointService {
         return userPointTable.insertOrUpdate(id, origin.point() + amount);
     }
 
+
+    /**
+     *  User의 포인트를 사용한다.
+     */
+    UserPoint usePoint(long id, long amount, long updateMillis) throws RuntimeException {
+        if(pointHistoryTable.selectAllByUserId(id).isEmpty()){
+            throw new UserNotFoundException("사용자 정보가 없습니다.");
+        }
+        if(amount < 1){
+            throw new IllegalArgumentException("최소 1포인트부터 사용할 수 있습니다.");
+        }
+        if(amount > 1000000){
+            throw new IllegalArgumentException("한번에 최대 100만 포인트까지 사용할 수 있습니다.");
+        }
+        UserPoint origin = userPointTable.selectById(id);
+        if(origin.point() < amount){
+            throw new IllegalArgumentException("보유한 포인트를 초과해서 사용할 수 없습니다.");
+        }
+        pointHistoryTable.insert(id, amount, TransactionType.USE, updateMillis);
+        return userPointTable.insertOrUpdate(id, origin.point()- amount);
+    }
+
 }
