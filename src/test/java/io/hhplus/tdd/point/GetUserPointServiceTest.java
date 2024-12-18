@@ -17,14 +17,15 @@ import static org.mockito.Mockito.*;
 
 public class GetUserPointServiceTest {
     @Mock
-    private PointService pointService;
-    @Mock
     private PointHistoryTable pointHistoryTable;
+
     @Mock
     private UserPointTable userPointTable;
 
+    private PointService pointService;
+
     @BeforeEach
-    void setUp(){
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         pointService = new PointService(pointHistoryTable, userPointTable);
     }
@@ -33,15 +34,16 @@ public class GetUserPointServiceTest {
     @DisplayName("내역이 없는 사용자는 포인트가 조회되지 않는다.")
     void if_history_not_exist_fail(){
         //  Given
-        long userId = 2L;
-
-        //  When
+        long userId = 1L;
         when(pointHistoryTable.selectAllByUserId(userId))
                 .thenReturn(Collections.emptyList());
 
-        //  Then
-        assertThrows(UserNotFoundException.class,
+        //  When
+        Exception exception = assertThrows(UserNotFoundException.class,
                 ()-> pointService.getUserPoint(userId));
+
+        //  Then
+        assertEquals("사용자 정보가 없습니다.", exception.getMessage());
 
         verify(pointHistoryTable).selectAllByUserId(userId);
     }
@@ -52,24 +54,23 @@ public class GetUserPointServiceTest {
 
         //  Given
         long userId = 1L;
-        long amount = 100;
-        UserPoint userPoint = new UserPoint(userId, amount, System.currentTimeMillis());
-        PointHistory pointHistory = new PointHistory(1, userPoint.id(), userPoint.point(), TransactionType.CHARGE, userPoint.updateMillis() );
+
+        UserPoint mockUserPoint = mock(UserPoint.class);
+        PointHistory mockPointHistory = mock(PointHistory.class);
+        when(pointHistoryTable.selectAllByUserId(userId))
+                .thenReturn(Collections.singletonList(mockPointHistory));
+        when(userPointTable.selectById(userId))
+                .thenReturn(mockUserPoint);
 
         //  When
-        when(pointHistoryTable.selectAllByUserId(userId))
-                .thenReturn(Collections.singletonList(pointHistory));
-        when(userPointTable.selectById(userId))
-                .thenReturn(userPoint);
         UserPoint result = pointService.getUserPoint(userId);
 
         //  Then
-        assertEquals(userPoint, result);
+        assertEquals(mockUserPoint, result);
 
         verify(pointHistoryTable).selectAllByUserId(userId);
         verify(userPointTable).selectById(userId);
         verifyNoMoreInteractions(pointHistoryTable, userPointTable);
-
     }
 
 

@@ -15,16 +15,16 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class GetPointHistoryServiceTest {
     @Mock
-    private PointService pointService;
-    @Mock
     private PointHistoryTable pointHistoryTable;
+
     @Mock
     private UserPointTable userPointTable;
+
+    private PointService pointService;
 
     @BeforeEach
     void setUp(){
@@ -56,9 +56,9 @@ public class GetPointHistoryServiceTest {
         // Given
         long userId = 1L;
         List<PointHistory> pointHistories = new ArrayList<>();
-        pointHistories.add(new PointHistory(1, userId, 100, TransactionType.CHARGE, System.currentTimeMillis()));
-        pointHistories.add(new PointHistory(2, userId, 100, TransactionType.CHARGE, System.currentTimeMillis()));
-        pointHistories.add(new PointHistory(3, userId, 100, TransactionType.USE, System.currentTimeMillis()));
+        pointHistories.add(mock(PointHistory.class));
+        pointHistories.add(mock(PointHistory.class));
+        pointHistories.add(mock(PointHistory.class));
 
         when(pointHistoryTable.selectAllByUserId(userId))
                 .thenReturn(pointHistories);

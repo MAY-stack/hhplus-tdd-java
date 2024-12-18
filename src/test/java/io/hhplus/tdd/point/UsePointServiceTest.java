@@ -13,16 +13,15 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class UsePointServiceTest {
-    @Mock
-    private PointService pointService;
     @Mock
     private PointHistoryTable pointHistoryTable;
     @Mock
     private UserPointTable userPointTable;
+
+    private PointService pointService;
 
     @BeforeEach
     void setUp(){
@@ -42,7 +41,7 @@ public class UsePointServiceTest {
 
         // When
         Exception exception = assertThrows(UserNotFoundException.class,
-                ()-> pointService.usePoint(userId, amount, currentTime));
+                ()-> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("사용자 정보가 없습니다.", exception.getMessage());
@@ -58,12 +57,13 @@ public class UsePointServiceTest {
         long userId = 1L;
         long amount = 0;
         long currentTime = System.currentTimeMillis();
-        PointHistory pointHistory = new PointHistory(0, userId, 0, TransactionType.CHARGE, 0);
+
+        PointHistory mockPointHistory = mock(PointHistory.class);
         when(pointHistoryTable.selectAllByUserId(userId))
-                .thenReturn(Collections.singletonList(pointHistory));
+                .thenReturn(Collections.singletonList(mockPointHistory));
         // When
         Exception exception = assertThrows(IllegalArgumentException.class,
-                ()-> pointService.usePoint(userId, amount, currentTime));
+                ()-> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("최소 1포인트부터 사용할 수 있습니다.", exception.getMessage());
@@ -78,12 +78,13 @@ public class UsePointServiceTest {
         long userId = 1L;
         long amount = 10000000;
         long currentTime = System.currentTimeMillis();
-        PointHistory pointHistory = new PointHistory(0, userId, 0, TransactionType.CHARGE, 0);
+
+        PointHistory mockPointHistory = mock(PointHistory.class);
         when(pointHistoryTable.selectAllByUserId(userId))
-                .thenReturn(Collections.singletonList(pointHistory));
+                .thenReturn(Collections.singletonList(mockPointHistory));
         // When
         Exception exception = assertThrows(IllegalArgumentException.class,
-                ()-> pointService.usePoint(userId, amount, currentTime));
+                ()-> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("한번에 최대 100만 포인트까지 사용할 수 있습니다.", exception.getMessage());
@@ -98,15 +99,16 @@ public class UsePointServiceTest {
         long userId = 1L;
         long amount = 1000;
         long currentTime = System.currentTimeMillis();
-        PointHistory pointHistory = new PointHistory(0, userId, 100, TransactionType.CHARGE, 0);
-        UserPoint origin = new UserPoint(userId, 100, System.currentTimeMillis());
+        PointHistory mockPointHistory = mock(PointHistory.class);
+        UserPoint mockUserPointOrigin = mock(UserPoint.class);
+        when(mockUserPointOrigin.point()).thenReturn(100L);
         when(pointHistoryTable.selectAllByUserId(userId))
-                .thenReturn(Collections.singletonList(pointHistory));
-        when(userPointTable.selectById(userId)).thenReturn(origin);
+                .thenReturn(Collections.singletonList(mockPointHistory));
+        when(userPointTable.selectById(userId)).thenReturn(mockUserPointOrigin);
 
         // When
         Exception exception = assertThrows(IllegalArgumentException.class,
-                ()-> pointService.usePoint(userId, amount, currentTime));
+                ()-> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("보유한 포인트를 초과해서 사용할 수 없습니다.", exception.getMessage());
@@ -121,25 +123,32 @@ public class UsePointServiceTest {
         // Given
         long userId = 1L;
         long amount = 100;
-        long currentTime = System.currentTimeMillis();
-        PointHistory pointHistory = new PointHistory(0, userId, 100, TransactionType.CHARGE, 0);
-        UserPoint origin = new UserPoint(userId, 300, System.currentTimeMillis());
-        UserPoint used = new UserPoint(userId, origin.point()-amount, currentTime);
+
+        PointHistory mockPointHistory = mock(PointHistory.class);
+        UserPoint mockUserPointOrigin = mock(UserPoint.class);
+        UserPoint mockUserPointUpdated = mock(UserPoint.class);
+        when(mockUserPointOrigin.point()).thenReturn(300L);
+        when(mockUserPointUpdated.point()).thenReturn(300L - amount);
         when(pointHistoryTable.selectAllByUserId(userId))
-                .thenReturn(Collections.singletonList(pointHistory));
-        when(userPointTable.selectById(userId)).thenReturn(origin);
-        when(userPointTable.insertOrUpdate(userId, origin.point() - amount))
-                .thenReturn(used);
+                .thenReturn(Collections.singletonList(mockPointHistory));
+        when(userPointTable.selectById(userId))
+                .thenReturn(mockUserPointOrigin);
+        when(userPointTable.insertOrUpdate(userId, mockUserPointOrigin.point() - amount))
+                .thenReturn(mockUserPointUpdated);
         // When
-        UserPoint result = pointService.usePoint(userId, amount, currentTime);
+        UserPoint result = pointService.usePoint(userId, amount);
 
         // Then
-        assertEquals(used.point(), result.point());
+        assertEquals(mockUserPointUpdated.point(), result.point());
 
-        verify(pointHistoryTable).selectAllByUserId(userId);
-        verify(userPointTable).selectById(userId);
-        verify(pointHistoryTable).insert(userId, amount, TransactionType.USE, currentTime);
-        verify(userPointTable).insertOrUpdate(userId, origin.point() - amount);
+        verify(pointHistoryTable)
+                .selectAllByUserId(userId);
+        verify(userPointTable)
+                .selectById(userId);
+        verify(pointHistoryTable)
+                .insert(eq(userId), eq(amount), eq(TransactionType.USE), anyLong());
+        verify(userPointTable)
+                .insertOrUpdate(userId, mockUserPointOrigin.point() - amount);
     }
 
 }
