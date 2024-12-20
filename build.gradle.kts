@@ -23,6 +23,8 @@ dependencyManagement {
 
 dependencies {
     implementation(libs.spring.boot.starter.web)
+    testImplementation("junit:junit:4.13.1")
+    testImplementation("org.testng:testng:7.1.0")
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     annotationProcessor(libs.spring.boot.configuration.processor)
