@@ -30,7 +30,10 @@ public class PointService {
      /**
      *  User의 포인트를 조회한다.
      */
-    public UserPoint getUserPoint(long id) throws RuntimeException {
+    UserPoint getUserPoint(long id) throws RuntimeException {
+        if(id<=0){
+            throw new IllegalArgumentException("ID는 1 이상 이어야 합니다.");
+        }
         if(pointHistoryTable.selectAllByUserId(id).isEmpty()){
             throw new UserNotFoundException("사용자 정보가 없습니다.");
         }
@@ -44,6 +47,9 @@ public class PointService {
         Lock lock = getLock(id);
         lock.lock();
         try {
+            if(id<=0){
+                throw new IllegalArgumentException("ID는 1 이상 이어야 합니다.");
+            }
             if (amount < 1) {
                 throw new IllegalArgumentException("1포인트 미만은 충전할 수 없습니다.");
             }
@@ -69,6 +75,9 @@ public class PointService {
         Lock lock = getLock(id);
         lock.lock();
         try {
+            if(id<=0){
+                throw new IllegalArgumentException("ID는 1 이상 이어야 합니다.");
+            }
             if (pointHistoryTable.selectAllByUserId(id).isEmpty()) {
                 throw new UserNotFoundException("사용자 정보가 없습니다.");
             }
@@ -93,6 +102,9 @@ public class PointService {
      *  User의 포인트 충전/사용 내역을 조회한다.
      */
     List<PointHistory> getPointHistory(long id) throws RuntimeException {
+        if(id<=0){
+            throw new IllegalArgumentException("ID는 1 이상 이어야 합니다.");
+        }
         List<PointHistory> histories = pointHistoryTable.selectAllByUserId(id);
         if (histories.isEmpty()) {
             throw new UserNotFoundException("사용자 정보가 없습니다.");
