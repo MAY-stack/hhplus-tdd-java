@@ -24,14 +24,14 @@ public class UsePointServiceTest {
     private PointService pointService;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         pointService = new PointService(pointHistoryTable, userPointTable);
     }
 
     @Test
     @DisplayName("포인트 충전 내역이 없는 사용자는 포인트를 사용할 수 없다.")
-    void if_history_not_exist_fail(){
+    void PointHistory가_없는_사용자가_포인트사용을_요청하면_UserNotFoundException이_발생한다() {
         // Given
         long userId = 1L;
         long amount = 100;
@@ -41,7 +41,7 @@ public class UsePointServiceTest {
 
         // When
         Exception exception = assertThrows(UserNotFoundException.class,
-                ()-> pointService.usePoint(userId, amount));
+                () -> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("사용자 정보가 없습니다.", exception.getMessage());
@@ -51,8 +51,7 @@ public class UsePointServiceTest {
 
 
     @Test
-    @DisplayName("최소 1포인트부터 사용할 수 있다.")
-    void if_less_one_point_use_fail(){
+    void PointHistory가_있는_사용자가_1포인트_미만사용을_요청하면_IllegalArgumentException이_발생한다() {
         // Given
         long userId = 1L;
         long amount = 0;
@@ -63,7 +62,7 @@ public class UsePointServiceTest {
                 .thenReturn(Collections.singletonList(mockPointHistory));
         // When
         Exception exception = assertThrows(IllegalArgumentException.class,
-                ()-> pointService.usePoint(userId, amount));
+                () -> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("최소 1포인트부터 사용할 수 있습니다.", exception.getMessage());
@@ -72,8 +71,21 @@ public class UsePointServiceTest {
     }
 
     @Test
-    @DisplayName("한번에 1_000_000 포인트 이상 사용할 수 없다.")
-    void if_over_one_million_use_fail(){
+    void ID가_0이하의_음수이면_IllegalArgumentException이_발생한다() {
+        // Given
+        long userId = -1L;
+        long amount = 100;
+
+        // When
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> pointService.usePoint(userId, amount));
+        // Then
+
+        assertEquals("ID는 1 이상 이어야 합니다.", exception.getMessage());
+    }
+
+    @Test
+    void PointHistory가_있는_사용자가_100만포인트_이상_사용을_요청하면_IllegalArgumentException이_발생한다() {
         // Given
         long userId = 1L;
         long amount = 10000000;
@@ -84,7 +96,7 @@ public class UsePointServiceTest {
                 .thenReturn(Collections.singletonList(mockPointHistory));
         // When
         Exception exception = assertThrows(IllegalArgumentException.class,
-                ()-> pointService.usePoint(userId, amount));
+                () -> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("한번에 최대 100만 포인트까지 사용할 수 있습니다.", exception.getMessage());
@@ -94,7 +106,7 @@ public class UsePointServiceTest {
 
     @Test
     @DisplayName("보유한 포인트 이상은 사용할 수 없다.")
-    void if_over_balance_use_fail(){
+    void PointHistory가_있는_사용자가_보유포인트_이상_사용을_요청하면_IllegalArgumentException이_발생한다() {
         // Given
         long userId = 1L;
         long amount = 1000;
@@ -108,7 +120,7 @@ public class UsePointServiceTest {
 
         // When
         Exception exception = assertThrows(IllegalArgumentException.class,
-                ()-> pointService.usePoint(userId, amount));
+                () -> pointService.usePoint(userId, amount));
 
         // Then
         assertEquals("보유한 포인트를 초과해서 사용할 수 없습니다.", exception.getMessage());
@@ -118,8 +130,7 @@ public class UsePointServiceTest {
     }
 
     @Test
-    @DisplayName("성공케이스")
-    void success(){
+    void PointHistory가_있는_사용자가_1포인트이상_100만포인트이면서_보유포인트_이내로_사용을_요청하면_포인트가_사용된다() {
         // Given
         long userId = 1L;
         long amount = 100;

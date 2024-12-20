@@ -23,14 +23,27 @@ public class ChargePointServiceTest {
     private PointService pointService;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         pointService = new PointService(pointHistoryTable, userPointTable);
     }
 
     @Test
-    @DisplayName("1 포인트 미만은 충전할 수 없다.")
-    void if_under_one_point_charge_should_fail(){
+    void ID가_0이하의_음수이면_IllegalArgumentException이_발생한다() {
+        // Given
+        long userId = -1L;
+        long amount = 100;
+
+        // When
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> pointService.chargePoint(userId, amount));
+        // Then
+
+        assertEquals("ID는 1 이상 이어야 합니다.", exception.getMessage());
+    }
+
+    @Test
+    void 포인트를_1미만으로_충전하면_IllegalArgumentException이_발생한다() {
         // Given
         long userId = 1L;
         long amount = -10L;
@@ -44,8 +57,7 @@ public class ChargePointServiceTest {
     }
 
     @Test
-    @DisplayName("100_000 포인트 이상은 충전할 수 없다.")
-    void if_over_one_hundred_thousand_point_charge_should_fail(){
+    void 한번에_100_000_포인트_이상을_충전하면_IllegalArgumentException이_발생한다() {
         // Given
         long userId = 1L;
         long amount = 200000L;
@@ -59,8 +71,7 @@ public class ChargePointServiceTest {
     }
 
     @Test
-    @DisplayName("100_000_000 포인트 이상은 보유할 수 없다.")
-    void can_have_over_one_hundred_million_point(){
+    void 충전_후_포인트가_1억_포인트를_초과하면_IllegalArgumentException이_발생한다() {
         // Given
         long userId = 1L;
         long amount = 90000;
@@ -80,8 +91,7 @@ public class ChargePointServiceTest {
     }
 
     @Test
-    @DisplayName("성공 케이스")
-    void success(){
+    void 포인트_1이상_100만_이하를_충전하면_충전처리를_하고_충전한_UserPoint를_반환한다() {
         // Given
         long userId = 1L;
         long amount = 100;

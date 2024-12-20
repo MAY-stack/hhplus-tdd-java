@@ -27,14 +27,26 @@ public class GetPointHistoryServiceTest {
     private PointService pointService;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         MockitoAnnotations.openMocks(this);
         pointService = new PointService(pointHistoryTable, userPointTable);
     }
 
     @Test
-    @DisplayName("충전 내역이 없는 사용자는 조회에 실패한다.")
-    void if_history_not_exist_fail(){
+    void ID가_0이하의_음수이면_IllegalArgumentException이_발생한다() {
+        // Given
+        long userId = -1L;
+
+        // When
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> pointService.getPointHistory(userId));
+        // Then
+
+        assertEquals("ID는 1 이상 이어야 합니다.", exception.getMessage());
+    }
+
+    @Test
+    void PointHistory가_없는_사용자의_포인트를_조회하면_UserNotFoundException이_발생한다() {
         // Given
         long userId = 1L;
         when(pointHistoryTable.selectAllByUserId(userId))
@@ -51,8 +63,7 @@ public class GetPointHistoryServiceTest {
     }
 
     @Test
-    @DisplayName("충전,사용 내역이 있는 사용자는 조회에 성공한다.")
-    void success(){
+    void PointHistory가_있는_사용자의_포인트를_조회하면_사용자의_UserPoint를_반환한다() {
         // Given
         long userId = 1L;
         List<PointHistory> pointHistories = new ArrayList<>();

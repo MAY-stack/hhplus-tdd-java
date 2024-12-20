@@ -31,8 +31,20 @@ public class GetUserPointServiceTest {
     }
 
     @Test
-    @DisplayName("내역이 없는 사용자는 포인트가 조회되지 않는다.")
-    void if_history_not_exist_fail(){
+    void ID가_0이하의_음수이면_IllegalArgumentException이_발생한다() {
+        // Given
+        long userId = -1L;
+
+        // When
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> pointService.getUserPoint(userId));
+        // Then
+
+        assertEquals("ID는 1 이상 이어야 합니다.", exception.getMessage());
+    }
+
+    @Test
+    void PointHistory가_없는_사용자의_포인트내역을_조회하면_UserNotFoundException이_발생한다() {
         //  Given
         long userId = 1L;
         when(pointHistoryTable.selectAllByUserId(userId))
@@ -40,7 +52,7 @@ public class GetUserPointServiceTest {
 
         //  When
         Exception exception = assertThrows(UserNotFoundException.class,
-                ()-> pointService.getUserPoint(userId));
+                () -> pointService.getUserPoint(userId));
 
         //  Then
         assertEquals("사용자 정보가 없습니다.", exception.getMessage());
@@ -49,8 +61,7 @@ public class GetUserPointServiceTest {
     }
 
     @Test
-    @DisplayName("내역이 존재하는 사용자는 포인트가 조회된다.")
-    void if_history_exist_success(){
+    void PointHistory가_없는_사용자의_포인트내역을_조회하면_사용자의_PointHistory_리스트가_반환된다() {
 
         //  Given
         long userId = 1L;
